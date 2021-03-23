@@ -377,9 +377,9 @@ extension _MMJSONDecoder {
             var _value : Any?
             switch value {
             case is Bool:
-                _value = _json.boolValue
+                _value = _json.boolValue ?? false
             case is Int:
-                _value = _json.intValue
+                _value = _json.intValue ?? Int(_json.stringValue ?? "") ?? 0
             case is Int8:
                 _value = _json.int8Value
             case is Int16:
@@ -398,16 +398,27 @@ extension _MMJSONDecoder {
                 _value = _json.uInt32Value
             case is UInt64:
                 _value = _json.uInt64Value
-            case is Float, is CGFloat:
-                _value = _json.floatValue
+            case is Float ,is CGFloat:
+                _value = _json.floatValue ?? Float(_json.stringValue ?? "") ?? 0
             case is Double:
-                _value = _json.doubleValue
+                _value = _json.doubleValue ?? Double(_json.stringValue ?? "") ?? 0
             case is String:
-                _value = _json.stringValue
+                if _json.rawValue is NSNull {
+                    _value = ""
+                } else {
+                    let result = _json.stringValue
+                    if _json.type == .string {
+                        _value = result
+                    } else {
+                        _value = "\(_json.rawValue ?? "")" == "0" ? "" : "\(_json.rawValue ?? "")"
+                    }
+                }
             default:
                 _value = _json.rawValue
             }
-            if _value != nil { _dict[key] = _value }
+            if let val = _value ,!(val is NSNull) {
+                _dict[key] = val
+            }
         }
         self.storage.push(container: _dict)
         defer { self.storage.popContainer() }
